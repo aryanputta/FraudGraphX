@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fraudgraphx-config
+  namespace: fraudgraphx
+data:
+  KAFKA_TOPIC_TRANSACTIONS: "transactions.raw"
+  KAFKA_TOPIC_ALERTS: "fraud.alerts"
+  KAFKA_TOPIC_ENRICHED: "transactions.enriched"
+  KAFKA_CONSUMER_GROUP: "fraudgraphx-consumers"
+  CASSANDRA_KEYSPACE: "fraudgraphx"
+  CASSANDRA_PORT: "9042"
+  NEO4J_DATABASE: "fraudgraphx"
+  SPARK_APP_NAME: "FraudGraphX"
+  SPARK_CHECKPOINT_DIR: "/tmp/spark-checkpoints"
+  FRAUD_THRESHOLD: "0.5"
+  GNN_FRAUD_THRESHOLD: "0.6"
+  ALERT_LATENCY_TARGET_MS: "150"
+  LOG_LEVEL: "INFO"
+  LLM_MODEL: "claude-sonnet-4-6"
+  LLM_INVESTIGATOR_ENABLED: "true"
+  API_HOST: "0.0.0.0"
+  API_PORT: "8000"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: fraudgraphx-secrets
+  namespace: fraudgraphx
+type: Opaque
+stringData:
+  CASSANDRA_USERNAME: "cassandra"
+  CASSANDRA_PASSWORD: "CHANGE_ME"
+  NEO4J_USER: "neo4j"
+  NEO4J_PASSWORD: "CHANGE_ME"
+  API_SECRET_KEY: "CHANGE_ME_IN_PRODUCTION"
+  ANTHROPIC_API_KEY: "CHANGE_ME"

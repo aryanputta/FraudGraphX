@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: nightly-rescorer
+  namespace: fraudgraphx
+spec:
+  schedule: "0 2 * * *"        # 02:00 UTC daily
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: rescorer
+              image: fraudgraphx/api:1.0.0
+              command: ["python", "-m", "src.rescoring.nightly_rescorer"]
+              envFrom:
+                - secretRef:
+                    name: fraudgraphx-secrets
+                - configMapRef:
+                    name: fraudgraphx-config
+              resources:
+                requests:
+                  cpu: "1000m"
+                  memory: "2Gi"
+                limits:
+                  cpu: "4000m"
+                  memory: "8Gi"
+              volumeMounts:
+                - name: model-store
+                  mountPath: /models
+                  readOnly: true
+          volumes:
+            - name: model-store
+              persistentVolumeClaim:
+                claimName: model-store-pvc

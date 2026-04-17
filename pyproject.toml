@@ -1,0 +1,83 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "fraudgraphx"
+version = "1.0.0"
+description = "Production-grade enterprise fraud detection platform"
+requires-python = ">=3.11"
+dependencies = [
+    # Streaming & Messaging
+    "confluent-kafka>=2.3.0",
+    "pyspark>=3.5.0",
+    # Graph
+    "neo4j>=5.15.0",
+    "networkx>=3.2.1",
+    # ML
+    "scikit-learn>=1.4.0",
+    "xgboost>=2.0.3",
+    "torch>=2.2.0",
+    "torch-geometric>=2.5.0",
+    "shap>=0.44.0",
+    "optuna>=3.5.0",
+    # Storage
+    "cassandra-driver>=3.29.0",
+    # API
+    "fastapi>=0.109.0",
+    "uvicorn[standard]>=0.27.0",
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.1.0",
+    "httpx>=0.26.0",
+    # Data
+    "pandas>=2.2.0",
+    "numpy>=1.26.0",
+    "pyarrow>=15.0.0",
+    # LLM
+    "anthropic>=0.23.0",
+    # Observability
+    "prometheus-client>=0.19.0",
+    "opentelemetry-sdk>=1.22.0",
+    "opentelemetry-instrumentation-fastapi>=0.43b0",
+    "structlog>=24.1.0",
+    # Utilities
+    "python-dotenv>=1.0.0",
+    "click>=8.1.7",
+    "rich>=13.7.0",
+    "tenacity>=8.2.3",
+    "python-multipart>=0.0.9",
+    "aiofiles>=23.2.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "httpx>=0.26.0",
+    "faker>=23.0.0",
+    "ruff>=0.2.0",
+    "mypy>=1.8.0",
+    "pre-commit>=3.6.0",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+addopts = "-v --cov=src --cov-report=term-missing --cov-report=html"
+
+[tool.setuptools.packages.find]
+where = ["src"]

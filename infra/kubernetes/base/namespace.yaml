@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: fraudgraphx
+  labels:
+    app.kubernetes.io/name: fraudgraphx
+    environment: production

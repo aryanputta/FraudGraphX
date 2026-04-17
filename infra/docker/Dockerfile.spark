@@ -1,0 +1,12 @@
+FROM bitnami/spark:3.5.0
+
+USER root
+RUN pip install --no-cache-dir \
+    confluent-kafka pydantic pydantic-settings \
+    cassandra-driver xgboost scikit-learn structlog \
+    python-dotenv numpy pandas pyarrow
+
+WORKDIR /app
+COPY src/ ./src/
+
+CMD ["python", "-m", "src.streaming.spark_pipeline"]

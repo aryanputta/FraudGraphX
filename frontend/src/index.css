@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  body { font-family: 'Inter', system-ui, sans-serif; }
+}
+
+@layer components {
+  .card {
+    @apply bg-gray-900 border border-gray-800 rounded-xl p-4 shadow-lg;
+  }
+  .badge-critical { @apply bg-fraud-900 text-fraud-50 text-xs font-semibold px-2 py-0.5 rounded-full; }
+  .badge-high     { @apply bg-orange-900 text-orange-100 text-xs font-semibold px-2 py-0.5 rounded-full; }
+  .badge-medium   { @apply bg-warn-900 text-warn-50 text-xs font-semibold px-2 py-0.5 rounded-full; }
+  .badge-low      { @apply bg-safe-900 text-safe-50 text-xs font-semibold px-2 py-0.5 rounded-full; }
+}

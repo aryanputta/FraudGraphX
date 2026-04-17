@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.eggs/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Tests
+.coverage
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Data (large files)
+data/sample/*.csv
+data/sample/*.parquet
+
+# Models (stored in S3 / volume mounts)
+/models/
+
+# Terraform
+infra/terraform/.terraform/
+infra/terraform/*.tfstate
+infra/terraform/*.tfstate.backup
+infra/terraform/.terraform.lock.hcl
+infra/terraform/environments/*/terraform.tfvars
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Secrets
+.env
+*.pem
+*.key
+
+# OS
+.DS_Store
+*.swp
