@@ -37,26 +37,32 @@ REQUEST_LATENCY = Histogram("fraudgraphx_request_latency_ms", "Request latency i
 ALERT_COUNT = Counter("fraudgraphx_alerts_total", "Total fraud alerts generated", ["risk_level"])
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    configure_logging()
-    logger.info("FraudGraphX API starting up")
-    deps = AppDependencies()
-    await deps.initialise()
-    app.state.deps = deps
-    yield
-    await deps.shutdown()
-    logger.info("FraudGraphX API shut down")
+def _make_lifespan(deps_override: object = None):
+    @asynccontextmanager
+    async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+        configure_logging()
+        if deps_override is not None:
+            app.state.deps = deps_override
+            yield
+        else:
+            logger.info("FraudGraphX API starting up")
+            deps = AppDependencies()
+            await deps.initialise()
+            app.state.deps = deps
+            yield
+            await deps.shutdown()
+            logger.info("FraudGraphX API shut down")
+    return lifespan
 
 
-def create_app() -> FastAPI:
+def create_app(deps_override: object = None) -> FastAPI:
     app = FastAPI(
         title="FraudGraphX",
         description="Production-grade enterprise fraud detection platform",
         version="1.0.0",
         docs_url="/docs",
         redoc_url="/redoc",
-        lifespan=lifespan,
+        lifespan=_make_lifespan(deps_override),
     )
 
     app.add_middleware(
@@ -68,7 +74,7 @@ def create_app() -> FastAPI:
     )
 
     @app.middleware("http")
-    async def metrics_middleware(request: Request, call_next):  # type: ignore[misc]
+    async def security_and_metrics_middleware(request: Request, call_next):  # type: ignore[misc]
         t0 = time.perf_counter()
         response = await call_next(request)
         latency_ms = (time.perf_counter() - t0) * 1000
@@ -78,6 +84,13 @@ def create_app() -> FastAPI:
             endpoint=request.url.path,
             status=response.status_code,
         ).inc()
+        # Security headers
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        # Latency tracking
         response.headers["X-Latency-Ms"] = str(round(latency_ms, 2))
         return response
 

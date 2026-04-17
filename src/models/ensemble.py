@@ -17,9 +17,15 @@ from src.common.config import get_settings
 from src.common.logging import get_logger
 from src.common.schemas import FraudType, ModelScore, RiskLevel
 from src.models.base import FraudClassifier
-from src.models.gnn_model import GNNFraudClassifier
 from src.models.logistic_regression import LogRegFraudClassifier
 from src.models.xgboost_model import XGBoostFraudClassifier
+
+# GNN is optional – requires torch + torch-geometric
+try:
+    from src.models.gnn_model import GNNFraudClassifier
+    _GNN_AVAILABLE = True
+except ImportError:
+    _GNN_AVAILABLE = False
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -104,9 +110,11 @@ class EnsembleScorer:
         if xgb_path.exists():
             self._models["xgboost"] = XGBoostFraudClassifier.load(xgb_path)
             logger.info("XGBoost model loaded")
-        if gnn_path.exists():
-            self._models["gnn"] = GNNFraudClassifier.load(gnn_path)
+        if gnn_path.exists() and _GNN_AVAILABLE:
+            self._models["gnn"] = GNNFraudClassifier.load(gnn_path)  # type: ignore[name-defined]
             logger.info("GNN model loaded")
+        elif gnn_path.exists():
+            logger.warning("GNN model found but torch not installed – skipping")
 
         if not self._models:
             logger.warning("No models loaded – using deterministic rule-based fallback")

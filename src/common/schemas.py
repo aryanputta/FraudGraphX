@@ -7,7 +7,9 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+import re
+
+from pydantic import BaseModel, Field, field_validator
 
 
 class RiskLevel(str, Enum):
@@ -29,22 +31,58 @@ class FraudType(str, Enum):
 
 # ── Transaction ────────────────────────────────────────────────────────────────
 
+_SAFE_ID_RE = re.compile(r"^[a-zA-Z0-9_\-]{1,128}$")
+
+
+def _validate_safe_id(v: str) -> str:
+    """Reject IDs that could be used for injection or log-forging."""
+    if not _SAFE_ID_RE.match(v):
+        raise ValueError("ID must be 1-128 alphanumeric/dash/underscore characters")
+    return v
+
+
 class Transaction(BaseModel):
     transaction_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     timestamp: datetime = Field(default_factory=datetime.utcnow)
-    amount: float
-    currency: str = "USD"
-    customer_id: str
-    account_id: str
-    merchant_id: str
-    merchant_category: str = ""
-    device_id: Optional[str] = None
-    ip_address: Optional[str] = None
+    amount: float = Field(gt=0, le=10_000_000, description="Transaction amount in currency units")
+    currency: str = Field(default="USD", min_length=3, max_length=3)
+    customer_id: str = Field(min_length=1, max_length=128)
+    account_id: str = Field(min_length=1, max_length=128)
+    merchant_id: str = Field(min_length=1, max_length=128)
+    merchant_category: str = Field(default="", max_length=64)
+    device_id: Optional[str] = Field(default=None, max_length=128)
+    ip_address: Optional[str] = Field(default=None, max_length=45)  # max IPv6 length
     geolocation: Optional[Dict[str, float]] = None  # {lat, lon}
-    card_type: Optional[str] = None
+    card_type: Optional[str] = Field(default=None, max_length=32)
     is_online: bool = True
-    channel: str = "web"
+    channel: str = Field(default="web", max_length=32)
     metadata: Dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("customer_id", "account_id", "merchant_id")
+    @classmethod
+    def validate_ids(cls, v: str) -> str:
+        return _validate_safe_id(v)
+
+    @field_validator("ip_address")
+    @classmethod
+    def validate_ip(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        # Basic sanity – full validation handled at network boundary
+        if not re.match(r"^[0-9a-fA-F.:]{2,45}$", v):
+            raise ValueError("Invalid IP address format")
+        return v
+
+    @field_validator("geolocation")
+    @classmethod
+    def validate_geolocation(cls, v: Optional[Dict[str, float]]) -> Optional[Dict[str, float]]:
+        if v is None:
+            return v
+        lat = v.get("lat", 0.0)
+        lon = v.get("lon", 0.0)
+        if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
+            raise ValueError("Geolocation out of valid range")
+        return v
 
 
 class EnrichedTransaction(Transaction):

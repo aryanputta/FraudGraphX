@@ -8,6 +8,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Request
 
 from src.api.dependencies import get_dependencies
 from src.common.logging import get_logger
+from src.models.trainer import train_all  # imported at module level so tests can patch it
 
 logger = get_logger(__name__)
 router = APIRouter()
@@ -31,7 +32,6 @@ async def get_benchmark(request: Request) -> List[Dict[str, Any]]:
 async def run_benchmark(request: Request, background_tasks: BackgroundTasks) -> Dict[str, str]:
     """Trigger full model training and benchmarking in background."""
     def _train() -> None:
-        from src.models.trainer import train_all
         results = train_all()
         for name, result in results.items():
             _cached_results[name] = result.model_dump()

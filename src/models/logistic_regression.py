@@ -29,7 +29,6 @@ class LogRegFraudClassifier(FraudClassifier):
                         max_iter=1000,
                         solver="saga",
                         C=0.1,
-                        n_jobs=-1,
                     ),
                 ),
             ]

@@ -23,9 +23,14 @@ from src.common.config import get_settings
 from src.common.logging import get_logger
 from src.common.schemas import BenchmarkResult
 from src.models.base import FEATURE_COLS, LABEL_COL, FraudClassifier
-from src.models.gnn_model import GNNFraudClassifier
 from src.models.logistic_regression import LogRegFraudClassifier
 from src.models.xgboost_model import XGBoostFraudClassifier
+
+try:
+    from src.models.gnn_model import GNNFraudClassifier
+    _GNN_AVAILABLE = True
+except ImportError:
+    _GNN_AVAILABLE = False
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -128,11 +133,14 @@ def train_all(data_path: Optional[str] = None, tune: bool = False) -> Dict[str, 
     results["xgboost"] = evaluate_model(xgb_clf, X_test, y_test)
 
     # ── GNN ───────────────────────────────────────────────────────────────────
-    logger.info("Training GNN…")
-    gnn = GNNFraudClassifier(epochs=30)
-    gnn.fit(X_train, y_train)
-    gnn.save(Path(settings.gnn_model_path))
-    results["gnn"] = evaluate_model(gnn, X_test, y_test)
+    if _GNN_AVAILABLE:
+        logger.info("Training GNN…")
+        gnn = GNNFraudClassifier(epochs=30)  # type: ignore[name-defined]
+        gnn.fit(X_train, y_train)
+        gnn.save(Path(settings.gnn_model_path))
+        results["gnn"] = evaluate_model(gnn, X_test, y_test)
+    else:
+        logger.warning("Skipping GNN training – torch not installed")
 
     # Print comparison table
     _print_benchmark_table(results)

@@ -32,7 +32,6 @@ class XGBoostFraudClassifier(FraudClassifier):
         "reg_lambda": 1.0,
         "scale_pos_weight": 50,   # imbalance correction
         "eval_metric": "aucpr",
-        "use_label_encoder": False,
         "tree_method": "hist",
         "n_jobs": -1,
         "random_state": 42,
@@ -77,7 +76,6 @@ class XGBoostFraudClassifier(FraudClassifier):
                 "scale_pos_weight": trial.suggest_int("scale_pos_weight", 10, 100),
                 "tree_method": "hist",
                 "eval_metric": "aucpr",
-                "use_label_encoder": False,
                 "random_state": 42,
             }
             model = xgb.XGBClassifier(**params)
